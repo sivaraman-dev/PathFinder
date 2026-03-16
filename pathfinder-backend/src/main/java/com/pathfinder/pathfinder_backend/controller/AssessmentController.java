@@ -33,7 +33,7 @@ public class AssessmentController {
     public ResponseEntity<?> submitAssessment(@RequestBody AssessmentDto dto,
                                               @AuthenticationPrincipal UserDetails userDetails) {
         User user = userService.findByEmail(userDetails.getUsername());
-        Assessment assessment = assessmentService.submitAssessment(user.getId(), dto.getAnswers());
+        Assessment assessment = assessmentService.submitAssessment(user.getId(), dto.getAnswers(), dto.getPreferredArea());
         List<CareerRecommendationDto> recommendations =
                 recommendationService.getRecommendations(assessment, user);
 

@@ -6,10 +6,19 @@ export default function Assessment() {
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers]     = useState({});
   const [current, setCurrent]     = useState(0);
+  const [preferredArea, setPreferredArea] = useState('');
   const [loading, setLoading]     = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError]         = useState('');
   const navigate = useNavigate();
+
+  const AREA_OPTIONS = [
+    { value: 'technical', label: 'Technical (IT, Programming, Data)', icon: '💻' },
+    { value: 'creative', label: 'Creative (Design, Arts, Media)', icon: '🎨' },
+    { value: 'business', label: 'Business & Finance', icon: '📊' },
+    { value: 'healthcare', label: 'Healthcare', icon: '🏥' },
+    { value: 'other', label: 'Other / Not sure yet', icon: '✨' },
+  ];
 
   useEffect(() => {
     questionsAPI.getAll()
@@ -52,7 +61,7 @@ export default function Assessment() {
           payloadAnswers[key] = val;
         }
       });
-      await assessmentAPI.submit({ answers: payloadAnswers });
+      await assessmentAPI.submit({ answers: payloadAnswers, preferredArea: preferredArea || undefined });
       navigate('/dashboard');
     } catch (err) {
       const backend = err.response?.data;
@@ -190,6 +199,49 @@ export default function Assessment() {
             );
           })}
         </div>
+
+        {/* Career area interest — shown on last question so recommendations match your interest */}
+        {current === questions.length - 1 && (
+          <div style={{
+            marginTop: '32px',
+            paddingTop: '24px',
+            borderTop: '1px solid var(--border)',
+          }}>
+            <p style={{ fontWeight: 600, marginBottom: '12px', color: 'var(--text)' }}>
+              Which career area interests you most?
+            </p>
+            <p style={{ color: 'var(--muted)', fontSize: '0.9rem', marginBottom: '16px' }}>
+              This helps us recommend careers that fit your interest (e.g. technical roles like Software Developer, Data Scientist).
+            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+              {AREA_OPTIONS.map((opt) => {
+                const selected = preferredArea === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setPreferredArea(opt.value)}
+                    style={{
+                      background: selected ? 'rgba(108,99,255,0.2)' : 'var(--surface2)',
+                      border: `1px solid ${selected ? 'var(--accent)' : 'var(--border)'}`,
+                      borderRadius: '10px',
+                      padding: '12px 16px',
+                      color: selected ? 'white' : 'var(--muted)',
+                      cursor: 'pointer',
+                      fontSize: '0.9rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                    }}
+                  >
+                    <span>{opt.icon}</span>
+                    <span>{opt.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Navigation */}

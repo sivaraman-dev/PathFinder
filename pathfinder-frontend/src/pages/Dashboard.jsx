@@ -5,7 +5,7 @@ import {
   Chart as ChartJS, RadialLinearScale, PointElement, LineElement,
   Filler, Tooltip, Legend, ArcElement,
 } from 'chart.js';
-import { assessmentAPI, careersAPI } from '../services/api';
+import { assessmentAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 ChartJS.register(RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend, ArcElement);
@@ -19,12 +19,14 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [aRes, cRes] = await Promise.allSettled([
-          assessmentAPI.latest(),
-          careersAPI.getAll(),
-        ]);
-        if (aRes.status === 'fulfilled') setAssessment(aRes.value.data);
-        if (cRes.status === 'fulfilled') setCareers(cRes.value.data?.slice(0, 6) || []);
+        const aRes = await Promise.allSettled([assessmentAPI.latest()]);
+        const res = aRes[0];
+        if (res.status === 'fulfilled' && res.value?.data) {
+          setAssessment(res.value.data);
+          // Use personalized recommendations from assessment (top 3), not full career list
+          const recs = res.value.data?.recommendations || [];
+          setCareers(recs.map(r => ({ ...r, matchScore: r.matchPercentage ?? r.matchScore })));
+        }
       } catch (_) {}
       finally { setLoading(false); }
     };
@@ -76,7 +78,7 @@ export default function Dashboard() {
 
   const stats = [
     { label: 'Assessments Taken', value: assessment ? '1' : '0', icon: '📋', color: '#6c63ff' },
-    { label: 'Careers Matched',   value: careers.length,          icon: '🎯', color: '#43e97b' },
+    { label: 'Top Matches',       value: careers.length,          icon: '🎯', color: '#43e97b' },
     { label: 'Skill Score',        value: assessment?.score ? `${assessment.score}%` : 'N/A', icon: '⚡', color: '#ff6584' },
     { label: 'Profile Complete',   value: assessment ? '100%' : '60%', icon: '✅', color: '#f5a623' },
   ];
@@ -156,9 +158,10 @@ export default function Dashboard() {
       {/* Careers preview */}
       {careers.length > 0 && (
         <div className="animate-fadeUp-d4" style={{ marginTop: '32px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h2 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '1.3rem' }}>Recommended Careers</h2>
-            <Link to="/careers" style={{ color: 'var(--accent)', textDecoration: 'none', fontSize: '0.9rem' }}>View all →</Link>
+          <div style={{ marginBottom: '20px' }}>
+            <h2 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '1.3rem', marginBottom: '4px' }}>Your top 3 career matches</h2>
+            <p style={{ color: 'var(--muted)', fontSize: '0.9rem', marginBottom: '12px' }}>Based on your assessment — these fit your profile best. Explore more options in Careers.</p>
+            <Link to="/careers" style={{ color: 'var(--accent)', textDecoration: 'none', fontSize: '0.9rem' }}>Explore all careers →</Link>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
             {careers.map((career, i) => (

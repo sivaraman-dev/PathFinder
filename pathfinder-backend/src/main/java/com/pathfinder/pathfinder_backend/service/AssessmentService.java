@@ -15,7 +15,7 @@ public class AssessmentService {
     private final AssessmentRepository assessmentRepository;
     private final UserRepository userRepository;
 
-    public Assessment submitAssessment(Long userId, Map<String, Integer> answers) {
+    public Assessment submitAssessment(Long userId, Map<String, Integer> answers, String preferredArea) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -31,12 +31,15 @@ public class AssessmentService {
         assessment.setVerbalScore(verbalScore);
         assessment.setNumericalScore(numericalScore);
         assessment.setCreativeScore(creativeScore);
+        if (preferredArea != null && !preferredArea.isBlank()) {
+            assessment.setPreferredArea(preferredArea.trim().toLowerCase());
+        }
 
         return assessmentRepository.save(assessment);
     }
 
     private int calculateScore(Map<String, Integer> answers, String category) {
-        // Simple scoring logic - you can make this more sophisticated
+        // Option indices 0-3 (4 options); normalize to 0-100 so scores match career min thresholds
         int score = 0;
         int count = 0;
 
@@ -47,7 +50,8 @@ public class AssessmentService {
             }
         }
 
-        return count > 0 ? (score * 100) / (count * 5) : 0;
+        // Max sum = count * 3 (best option index 3), so scale to 0-100
+        return count > 0 ? (score * 100) / (count * 3) : 0;
     }
 
     public Assessment getLatestAssessment(Long userId) {

@@ -7,4 +7,6 @@ import java.util.Map;
 public class AssessmentDto {
     private Map<String, Integer> answers;
     private Long userId;
+    /** Career area interest: technical, creative, business, healthcare, other */
+    private String preferredArea;
 }

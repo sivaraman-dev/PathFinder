@@ -32,6 +32,10 @@ public class Assessment {
     @Column(name = "creative_score")
     private Integer creativeScore;
 
+    /** User's stated interest: technical, creative, business, healthcare, or null */
+    @Column(name = "preferred_area")
+    private String preferredArea;
+
     @Column(name = "completed_at")
     private LocalDateTime completedAt = LocalDateTime.now();
 }
